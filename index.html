@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="自主練会計">
+<title>自主練会計</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,sans-serif;background:#f2f2f7;color:#1c1c1e;font-size:16px}
+.app{max-width:480px;margin:0 auto;padding:1rem;padding-bottom:2rem}
+h1{font-size:20px;font-weight:600;padding:1rem 0 1.25rem;display:flex;align-items:center;gap:8px}
+.card{background:#fff;border-radius:14px;padding:1rem 1.25rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.st{font-size:12px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+input[type=text],input[type=date],input[type=number]{width:100%;padding:10px 12px;border:1px solid #d1d1d6;border-radius:10px;font-size:16px;background:#f9f9f9;color:#1c1c1e;outline:none}
+input:focus{border-color:#34c759;background:#fff}
+.mg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.chip{padding:9px 6px;border:1.5px solid #d1d1d6;border-radius:10px;text-align:center;cursor:pointer;font-size:14px;color:#8e8e93;user-select:none;background:#f9f9f9}
+.chip.on{background:#e8f8ed;border-color:#34c759;color:#1a7a36;font-weight:600}
+.ar{display:flex;gap:8px}
+.ar input{flex:1}
+.ab{padding:10px 16px;border:1.5px solid #d1d1d6;border-radius:10px;background:#f9f9f9;font-size:15px;color:#1c1c1e;cursor:pointer}
+.ct{display:flex;align-items:center;gap:12px;cursor:pointer;font-size:16px}
+.ct input{width:20px;height:20px;accent-color:#34c759;cursor:pointer}
+.ei{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.ei input[type=text]{flex:1}
+.ei input[type=number]{width:88px}
+.ey{font-size:14px;color:#8e8e93;white-space:nowrap}
+.rb{padding:8px 10px;border:1px solid #d1d1d6;border-radius:8px;background:#fff;font-size:14px;color:#8e8e93;cursor:pointer}
+.aeb{width:100%;padding:10px;border:1.5px dashed #d1d1d6;border-radius:10px;background:transparent;font-size:14px;color:#8e8e93;cursor:pointer}
+.mgg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.m{background:#f2f2f7;border-radius:10px;padding:12px}
+.ml{font-size:12px;color:#8e8e93;margin-bottom:4px}
+.mv{font-size:20px;font-weight:600;color:#1c1c1e}
+.mv.g{color:#1a7a36}
+.mv.r{color:#c0392b}
+.res{background:#e8f8ed;border:1.5px solid #34c759;border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.rl{font-size:13px;color:#1a7a36;margin-bottom:4px}
+.ra{font-size:30px;font-weight:700;color:#0d5c27}
+.rs{font-size:13px;color:#1a7a36;margin-top:4px}
+.bb{border-radius:12px;padding:12px 16px;margin-bottom:14px}
+.bb.s{background:#e8f8ed;border:1.5px solid #34c759}
+.bb.d{background:#ffebe8;border:1.5px solid #ff6b6b}
+.bb.z{background:#f2f2f7;border:1px solid #d1d1d6}
+.bp{width:100%;padding:14px;background:#34c759;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+.bp:disabled{background:#d1d1d6;color:#8e8e93;cursor:not-allowed}
+.tb{display:flex;gap:4px;margin-bottom:1rem;background:#e5e5ea;padding:4px;border-radius:12px}
+.tab{flex:1;padding:9px;text-align:center;font-size:14px;border-radius:9px;cursor:pointer;color:#8e8e93;border:none;background:transparent;font-weight:500}
+.tab.on{background:#fff;color:#1c1c1e;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.bbig{font-size:38px;font-weight:700;margin:6px 0 2px}
+.ebbe{font-size:13px;color:#8e8e93}
+.ebb{font-size:13px;padding:4px 12px;border:1px solid #d1d1d6;border-radius:8px;background:transparent;cursor:pointer;color:#8e8e93}
+.hi{padding:13px 0;border-bottom:1px solid #f2f2f7}
+.hi:last-child{border-bottom:none}
+.hr2{display:flex;justify-content:space-between;align-items:center}
+.bdg{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:600}
+.bdg.c{background:#fff3e0;color:#e65100}
+.bdg.n{background:#e8f8ed;color:#1a7a36}
+.hd{font-size:13px;color:#8e8e93;margin:3px 0}
+.db{font-size:12px;padding:3px 8px;border:1px solid #d1d1d6;border-radius:6px;background:transparent;cursor:pointer;color:#8e8e93}
+.es{text-align:center;padding:2rem 0;color:#c7c7cc;font-size:14px}
+.iwy{display:flex;align-items:center;gap:8px}
+.iwy input{flex:1;font-size:20px;font-weight:600}
+.sbr{display:flex;gap:8px;margin-top:12px}
+.sbr button{flex:1;padding:11px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;border:none}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>🏸 自主練会計</h1>
+<div class="tb">
+<button class="tab on" onclick="showTab('r')" id="tab-r">記録する</button>
+<button class="tab" onclick="showTab('h')" id="tab-h">履歴・残高</button>
+</div>
+<div id="vr">
+<div class="card"><div class="st">練習日</div><input type="date" id="pd"/></div>
+<div class="card"><div class="st">参加者</div><div class="mg" id="mg"></div><div class="ar"><input type="text" id="nmi" placeholder="名前を追加..." maxlength="8"/><button class="ab" onclick="addM()">追加</button></div></div>
+<div class="card"><div class="st">支出</div><div id="el"></div><button class="aeb" onclick="addE()">＋ 支出を追加</button></div>
+<div class="card"><div class="st">オプション</div><label class="ct"><input type="checkbox" id="cc" onchange="calc()"/>コーチ来訪（＋¥1,000を人数で割る）</label></div>
+<div class="card"><div class="st">集計</div>
+<div class="mgg">
+<div class="m"><div class="ml">参加人数</div><div class="mv g" id="cd">0 人</div></div>
+<div class="m"><div class="ml">合計支出</div><div class="mv" id="ed">¥0</div></div>
+</div>
+<div class="res" id="rb" style="display:none"><div class="rl">一人から集める金額</div><div class="ra" id="pp">¥500</div><div class="rs" id="cn" style="display:none"></div></div>
+<div id="bcb" class="bb z" style="display:none"><div style="font-size:13px;color:#8e8e93;margin-bottom:3px">今回の収支</div><div style="font-size:16px;font-weight:600" id="bd">±¥0</div><div style="font-size:12px;color:#8e8e93;margin-top:2px" id="bn"></div></div>
+<button class="bp" id="sb" onclick="save()" disabled>この練習を保存する</button>
+</div>
+</div>
+<div id="vh" style="display:none">
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="st" style="margin-bottom:0">現在の残高</div><button class="ebb" onclick="toggleBE()" id="ebbe">編集</button></div>
+<div id="bvm"><div class="bbig" id="bbd" style="color:#1a7a36">¥0</div><div class="ebbe" id="bbrk"></div></div>
+<div id="bem" style="display:none">
+<div style="font-size:13px;color:#8e8e93;margin-bottom:10px">実際に手元にある金額を入力してください</div>
+<div class="iwy"><input type="number" id="mbi" placeholder="0" min="0"/><span style="font-size:16px;color:#8e8e93">円</span></div>
+<div class="sbr"><button onclick="saveMB()" style="background:#34c759;color:#fff">保存</button><button onclick="cancelBE()" style="background:#f2f2f7;color:#8e8e93">キャンセル</button></div>
+</div>
+</div>
+<div class="card"><div class="st">累計</div>
+<div class="mgg">
+<div class="m"><div class="ml">練習回数</div><div class="mv" id="ss">0 回</div></div>
+<div class="m"><div class="ml">累計収支</div><div class="mv" id="sbl">¥0</div></div>
+<div class="m"><div class="ml">累計収入</div><div class="mv g" id="si">¥0</div></div>
+<div class="m"><div class="ml">累計支出</div><div class="mv r" id="se">¥0</div></div>
+</div></div>
+<div class="card"><div class="st" style="margin-bottom:14px">練習の記録</div><div id="hl"></div></div>
+</div>
+</div>
+<script>
+const DM=['田中','佐藤','鈴木','山田','伊藤','加藤'];
+let members=JSON.parse(localStorage.getItem('bm_m')||JSON.stringify(DM));
+let sel=new Set();
+let hist=JSON.parse(localStorage.getItem('bm_h')||'[]');
+let mb=parseInt(localStorage.getItem('bm_mb')||'-1');
+let exps=[{id:1,name:'コート代',amount:''},{id:2,name:'シャトル代',amount:''}];
+let eid=3;
+function persist(){localStorage.setItem('bm_m',JSON.stringify(members));localStorage.setItem('bm_h',JSON.stringify(hist));localStorage.setItem('bm_mb',String(mb));}
+function renderM(){const g=document.getElementById('mg');g.innerHTML='';members.forEach(m=>{const d=document.createElement('div');d.className='chip'+(sel.has(m)?' on':'');d.textContent=m;d.onclick=()=>{sel.has(m)?sel.delete(m):sel.add(m);renderM();calc();};g.appendChild(d);});}
+function addM(){const el=document.getElementById('nmi');const n=el.value.trim();if(!n||members.includes(n)){el.value='';return;}members.push(n);sel.add(n);persist();el.value='';renderM();calc();}
+document.getElementById('nmi').addEventListener('keydown',e=>{if(e.key==='Enter')addM();});
+function renderE(){const l=document.getElementById('el');l.innerHTML='';exps.forEach(e=>{const r=document.createElement('div');r.className='ei';r.innerHTML=`<input type="text" placeholder="項目名" value="${e.name}" oninput="uEN(${e.id},this.value)"/><input type="number" placeholder="金額" value="${e.amount}" oninput="uEA(${e.id},this.value)" min="0" style="width:88px"/><span class="ey">円</span><button class="rb" onclick="rmE(${e.id})">×</button>`;l.appendChild(r);});}
+function addE(){exps.push({id:eid++,name:'',amount:''});renderE();calc();}
+function rmE(id){exps=exps.filter(e=>e.id!==id);renderE();calc();}
+function uEN(id,v){const e=exps.find(e=>e.id===id);if(e)e.name=v;}
+function uEA(id,v){const e=exps.find(e=>e.id===id);if(e){e.amount=v;calc();}}
+function calc(){const c=sel.size;const hc=document.getElementById('cc').checked;const ce=(hc&&c>0)?Math.ceil(1000/c):0;const pp=500+ce;const inc=pp*c;const et=exps.reduce((s,e)=>s+(parseInt(e.amount)||0),0);const bal=inc-et;document.getElementById('cd').textContent=c+' 人';document.getElementById('ed').textContent='¥'+et.toLocaleString();if(c>0){document.getElementById('rb').style.display='block';document.getElementById('pp').textContent='¥'+pp.toLocaleString();const cn=document.getElementById('cn');if(hc){cn.style.display='block';cn.textContent='（¥500＋コーチ代¥'+ce+'）';}else cn.style.display='none';const bx=document.getElementById('bcb');bx.style.display='block';bx.className='bb '+(bal>0?'s':bal<0?'d':'z');const be=document.getElementById('bd');be.style.color=bal>0?'#1a7a36':bal<0?'#c0392b':'#8e8e93';be.textContent=(bal>=0?'+':'')+'¥'+bal.toLocaleString();document.getElementById('bn').textContent=bal>0?'収入が支出を上回っています':bal<0?'支出が収入を上回っています':'収支ぴったりです';document.getElementById('sb').disabled=false;}else{document.getElementById('rb').style.display='none';document.getElementById('bcb').style.display='none';document.getElementById('sb').disabled=true;}}
+function save(){const dt=document.getElementById('pd').value||new Date().toISOString().split('T')[0];const c=sel.size;const hc=document.getElementById('cc').checked;const ce=hc?Math.ceil(1000/c):0;const pp=500+ce;const inc=pp*c;const ei=exps.filter(e=>e.name&&parseInt(e.amount)>0).map(e=>({name:e.name,amount:parseInt(e.amount)}));const et=ei.reduce((s,e)=>s+e.amount,0);hist.unshift({id:Date.now(),date:dt,members:[...sel],hasCoach:hc,perPerson:pp,income:inc,expItems:ei,expTotal:et,balance:inc-et});persist();sel.clear();document.getElementById('cc').checked=false;exps=[{id:1,name:'コート代',amount:''},{id:2,name:'シャトル代',amount:''}];eid=3;renderM();renderE();calc();showTab('h');}
+function toggleBE(){document.getElementById('bvm').style.display='none';document.getElementById('bem').style.display='block';document.getElementById('ebbe').style.display='none';if(mb>=0)document.getElementById('mbi').value=mb;}
+function cancelBE(){document.getElementById('bvm').style.display='block';document.getElementById('bem').style.display='none';document.getElementById('ebbe').style.display='inline-block';}
+function saveMB(){const v=parseInt(document.getElementById('mbi').value);if(isNaN(v)||v<0)return;mb=v;persist();cancelBE();renderBD();}
+function renderBD(){const big=document.getElementById('bbd');const brk=document.getElementById('bbrk');if(mb>=0){big.textContent='¥'+mb.toLocaleString();big.style.color=mb>0?'#1a7a36':mb===0?'#8e8e93':'#c0392b';brk.textContent='手動で入力した残高';}else{const t=hist.reduce((s,r)=>s+r.balance,0);big.textContent=(t>=0?'':'-')+'¥'+Math.abs(t).toLocaleString();big.style.color=t>0?'#1a7a36':t===0?'#8e8e93':'#c0392b';brk.textContent='履歴の累計から自動計算';}}
+function renderH(){renderBD();const ti=hist.reduce((s,r)=>s+r.income,0);const te=hist.reduce((s,r)=>s+r.expTotal,0);const tb=ti-te;document.getElementById('ss').textContent=hist.length+' 回';document.getElementById('si').textContent='¥'+ti.toLocaleString();document.getElementById('se').textContent='¥'+te.toLocaleString();const be=document.getElementById('sbl');be.textContent=(tb>=0?'+':'')+'¥'+tb.toLocaleString();be.style.color=tb>0?'#1a7a36':tb<0?'#c0392b':'#8e8e93';const l=document.getElementById('hl');if(hist.length===0){l.innerHTML='<div class="es">まだ記録がありません</div>';return;}l.innerHTML=hist.map(r=>{const d=new Date(r.date);const lb=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;const es=r.expItems&&r.expItems.length>0?r.expItems.map(e=>`${e.name}¥${e.amount.toLocaleString()}`).join('・'):'なし';const b=r.balance;const bc=b>0?'#1a7a36':b<0?'#c0392b':'#8e8e93';return`<div class="hi"><div class="hr2"><span style="font-size:15px;font-weight:600">${lb}</span><span class="bdg ${r.hasCoach?'c':'n'}">${r.hasCoach?'コーチあり':'自主練'}</span></div><div class="hd">${r.members.join('・')}（${r.members.length}人）</div><div class="hd">支出：${es}</div><div class="hr2" style="margin-top:5px"><span style="font-size:13px;color:#8e8e93">収入¥${r.income.toLocaleString()} ／ 支出¥${r.expTotal.toLocaleString()} ／ <span style="font-weight:600;color:${bc}">収支${b>=0?'+':''}¥${b.toLocaleString()}</span></span><button class="db" onclick="delR(${r.id})">削除</button></div></div>`;}).join('');}
+function delR(id){hist=hist.filter(r=>r.id!==id);persist();renderH();}
+function showTab(t){document.getElementById('vr').style.display=t==='r'?'block':'none';document.getElementById('vh').style.display=t==='h'?'block':'none';document.getElementById('tab-r').className='tab'+(t==='r'?' on':'');document.getElementById('tab-h').className='tab'+(t==='h'?' on':'');if(t==='h')renderH();}
+document.getElementById('pd').value=new Date().toISOString().split('T')[0];
+renderM();renderE();calc();
+</script>
+</body>
+</html>
