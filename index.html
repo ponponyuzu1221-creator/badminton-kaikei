@@ -16,7 +16,7 @@ h1{font-size:20px;font-weight:600;padding:1rem 0 1.25rem;display:flex;align-item
 input[type=text],input[type=date],input[type=number]{width:100%;padding:10px 12px;border:1px solid #d1d1d6;border-radius:10px;font-size:16px;background:#f9f9f9;color:#1c1c1e;outline:none}
 input:focus{border-color:#34c759;background:#fff}
 .mg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.chip{padding:9px 6px;border:1.5px solid #d1d1d6;border-radius:10px;text-align:center;cursor:pointer;font-size:14px;color:#8e8e93;user-select:none;background:#f9f9f9}
+.chip{padding:9px 6px;border:1.5px solid #d1d1d6;border-radius:10px;text-align:center;cursor:pointer;font-size:14px;color:#8e8e93;user-select:none;background:#f9f9f9;position:relative}
 .chip.on{background:#e8f8ed;border-color:#34c759;color:#1a7a36;font-weight:600}
 .ar{display:flex;gap:8px}
 .ar input{flex:1}
@@ -64,6 +64,11 @@ input:focus{border-color:#34c759;background:#fff}
 .iwy input{flex:1;font-size:20px;font-weight:600}
 .sbr{display:flex;gap:8px;margin-top:12px}
 .sbr button{flex:1;padding:11px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;border:none}
+.dxbtn{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:none;background:#ff3b30;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;z-index:1}
+.cog{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.cchip{padding:10px 6px;border:1.5px solid #d1d1d6;border-radius:10px;text-align:center;cursor:pointer;font-size:13px;color:#8e8e93;user-select:none;background:#f9f9f9;line-height:1.4}
+.cchip.on{background:#fff3e0;border-color:#ff9500;color:#8a5000;font-weight:600}
+.cchip small{font-size:11px;display:block;margin-top:2px}
 </style>
 </head>
 <body>
@@ -74,10 +79,23 @@ input:focus{border-color:#34c759;background:#fff}
 <button class="tab" onclick="showTab('h')" id="tab-h">履歴・残高</button>
 </div>
 <div id="vr">
-<div class="card"><div class="st">練習日</div><input type="date" id="pd"/></div>
-<div class="card"><div class="st">参加者</div><div class="mg" id="mg"></div><div class="ar"><input type="text" id="nmi" placeholder="名前を追加..." maxlength="8"/><button class="ab" onclick="addM()">追加</button></div></div>
+<div class="card">
+  <div class="st" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <span>参加者</span>
+    <button class="ebb" id="dmbtn" onclick="toggleDelMode()">名前を削除する</button>
+  </div>
+  <div class="mg" id="mg"></div>
+  <div class="ar"><input type="text" id="nmi" placeholder="名前を追加..." maxlength="8"/><button class="ab" onclick="addM()">追加</button></div>
+</div>
 <div class="card"><div class="st">支出</div><div id="el"></div><button class="aeb" onclick="addE()">＋ 支出を追加</button></div>
-<div class="card"><div class="st">オプション</div><label class="ct"><input type="checkbox" id="cc" onchange="calc()"/>コーチ来訪（＋¥1,000を人数で割る）</label></div>
+<div class="card">
+  <div class="st">コーチ来訪</div>
+  <div class="cog">
+    <div class="cchip on" onclick="setCoach(0)" id="co0">なし</div>
+    <div class="cchip" onclick="setCoach(1)" id="co1">コーチ1人<small>+¥1,000÷人数</small></div>
+    <div class="cchip" onclick="setCoach(2)" id="co2">コーチ2人<small>+¥2,000÷人数</small></div>
+  </div>
+</div>
 <div class="card"><div class="st">集計</div>
 <div class="mgg">
 <div class="m"><div class="ml">参加人数</div><div class="mv g" id="cd">0 人</div></div>
@@ -116,22 +134,27 @@ let hist=JSON.parse(localStorage.getItem('bm_h')||'[]');
 let mb=parseInt(localStorage.getItem('bm_mb')||'-1');
 let exps=[{id:1,name:'コート代',amount:''},{id:2,name:'シャトル代',amount:''}];
 let eid=3;
+let delMode=false;
+let coachCount=0;
 function persist(){localStorage.setItem('bm_m',JSON.stringify(members));localStorage.setItem('bm_h',JSON.stringify(hist));localStorage.setItem('bm_mb',String(mb));}
-function renderM(){const g=document.getElementById('mg');g.innerHTML='';members.forEach(m=>{const d=document.createElement('div');d.className='chip'+(sel.has(m)?' on':'');d.textContent=m;d.onclick=()=>{sel.has(m)?sel.delete(m):sel.add(m);renderM();calc();};g.appendChild(d);});}
+function toggleDelMode(){delMode=!delMode;document.getElementById('dmbtn').textContent=delMode?'完了':'名前を削除する';document.getElementById('dmbtn').style.color=delMode?'#ff3b30':'';renderM();}
+function delM(name){members=members.filter(m=>m!==name);sel.delete(name);persist();renderM();calc();}
+function renderM(){const g=document.getElementById('mg');g.innerHTML='';members.forEach(m=>{const d=document.createElement('div');d.className='chip'+(sel.has(m)?' on':'');d.textContent=m;if(!delMode){d.onclick=()=>{sel.has(m)?sel.delete(m):sel.add(m);renderM();calc();};}if(delMode){const x=document.createElement('button');x.className='dxbtn';x.textContent='×';x.onclick=(e)=>{e.stopPropagation();delM(m);};d.appendChild(x);}g.appendChild(d);});}
 function addM(){const el=document.getElementById('nmi');const n=el.value.trim();if(!n||members.includes(n)){el.value='';return;}members.push(n);sel.add(n);persist();el.value='';renderM();calc();}
 document.getElementById('nmi').addEventListener('keydown',e=>{if(e.key==='Enter')addM();});
+function setCoach(n){coachCount=n;[0,1,2].forEach(i=>{document.getElementById('co'+i).className='cchip'+(i===n?' on':'');});calc();}
 function renderE(){const l=document.getElementById('el');l.innerHTML='';exps.forEach(e=>{const r=document.createElement('div');r.className='ei';r.innerHTML=`<input type="text" placeholder="項目名" value="${e.name}" oninput="uEN(${e.id},this.value)"/><input type="number" placeholder="金額" value="${e.amount}" oninput="uEA(${e.id},this.value)" min="0" style="width:88px"/><span class="ey">円</span><button class="rb" onclick="rmE(${e.id})">×</button>`;l.appendChild(r);});}
 function addE(){exps.push({id:eid++,name:'',amount:''});renderE();calc();}
 function rmE(id){exps=exps.filter(e=>e.id!==id);renderE();calc();}
 function uEN(id,v){const e=exps.find(e=>e.id===id);if(e)e.name=v;}
 function uEA(id,v){const e=exps.find(e=>e.id===id);if(e){e.amount=v;calc();}}
-function calc(){const c=sel.size;const hc=document.getElementById('cc').checked;const ce=(hc&&c>0)?Math.ceil(1000/c):0;const pp=500+ce;const inc=pp*c;const et=exps.reduce((s,e)=>s+(parseInt(e.amount)||0),0);const bal=inc-et;document.getElementById('cd').textContent=c+' 人';document.getElementById('ed').textContent='¥'+et.toLocaleString();if(c>0){document.getElementById('rb').style.display='block';document.getElementById('pp').textContent='¥'+pp.toLocaleString();const cn=document.getElementById('cn');if(hc){cn.style.display='block';cn.textContent='（¥500＋コーチ代¥'+ce+'）';}else cn.style.display='none';const bx=document.getElementById('bcb');bx.style.display='block';bx.className='bb '+(bal>0?'s':bal<0?'d':'z');const be=document.getElementById('bd');be.style.color=bal>0?'#1a7a36':bal<0?'#c0392b':'#8e8e93';be.textContent=(bal>=0?'+':'')+'¥'+bal.toLocaleString();document.getElementById('bn').textContent=bal>0?'収入が支出を上回っています':bal<0?'支出が収入を上回っています':'収支ぴったりです';document.getElementById('sb').disabled=false;}else{document.getElementById('rb').style.display='none';document.getElementById('bcb').style.display='none';document.getElementById('sb').disabled=true;}}
-function save(){const dt=document.getElementById('pd').value||new Date().toISOString().split('T')[0];const c=sel.size;const hc=document.getElementById('cc').checked;const ce=hc?Math.ceil(1000/c):0;const pp=500+ce;const inc=pp*c;const ei=exps.filter(e=>e.name&&parseInt(e.amount)>0).map(e=>({name:e.name,amount:parseInt(e.amount)}));const et=ei.reduce((s,e)=>s+e.amount,0);hist.unshift({id:Date.now(),date:dt,members:[...sel],hasCoach:hc,perPerson:pp,income:inc,expItems:ei,expTotal:et,balance:inc-et});persist();sel.clear();document.getElementById('cc').checked=false;exps=[{id:1,name:'コート代',amount:''},{id:2,name:'シャトル代',amount:''}];eid=3;renderM();renderE();calc();showTab('h');}
+function calc(){const c=sel.size;const ce=(coachCount>0&&c>0)?Math.ceil(coachCount*1000/c):0;const pp=500+ce;const inc=pp*c;const et=exps.reduce((s,e)=>s+(parseInt(e.amount)||0),0);const bal=inc-et;document.getElementById('cd').textContent=c+' 人';document.getElementById('ed').textContent='¥'+et.toLocaleString();if(c>0){document.getElementById('rb').style.display='block';document.getElementById('pp').textContent='¥'+pp.toLocaleString();const cn=document.getElementById('cn');if(coachCount>0){cn.style.display='block';cn.textContent='（¥500＋コーチ代¥'+ce+'）';}else cn.style.display='none';const bx=document.getElementById('bcb');bx.style.display='block';bx.className='bb '+(bal>0?'s':bal<0?'d':'z');const be=document.getElementById('bd');be.style.color=bal>0?'#1a7a36':bal<0?'#c0392b':'#8e8e93';be.textContent=(bal>=0?'+':'')+'¥'+bal.toLocaleString();document.getElementById('bn').textContent=bal>0?'収入が支出を上回っています':bal<0?'支出が収入を上回っています':'収支ぴったりです';document.getElementById('sb').disabled=false;}else{document.getElementById('rb').style.display='none';document.getElementById('bcb').style.display='none';document.getElementById('sb').disabled=true;}}
+function save(){const dt=document.getElementById('pd').value||new Date().toISOString().split('T')[0];const c=sel.size;const ce=coachCount>0?Math.ceil(coachCount*1000/c):0;const pp=500+ce;const inc=pp*c;const ei=exps.filter(e=>e.name&&parseInt(e.amount)>0).map(e=>({name:e.name,amount:parseInt(e.amount)}));const et=ei.reduce((s,e)=>s+e.amount,0);hist.unshift({id:Date.now(),date:dt,members:[...sel],coachCount:coachCount,hasCoach:coachCount>0,perPerson:pp,income:inc,expItems:ei,expTotal:et,balance:inc-et});persist();sel.clear();coachCount=0;setCoach(0);exps=[{id:1,name:'コート代',amount:''},{id:2,name:'シャトル代',amount:''}];eid=3;renderM();renderE();calc();showTab('h');}
 function toggleBE(){document.getElementById('bvm').style.display='none';document.getElementById('bem').style.display='block';document.getElementById('ebbe').style.display='none';if(mb>=0)document.getElementById('mbi').value=mb;}
 function cancelBE(){document.getElementById('bvm').style.display='block';document.getElementById('bem').style.display='none';document.getElementById('ebbe').style.display='inline-block';}
 function saveMB(){const v=parseInt(document.getElementById('mbi').value);if(isNaN(v)||v<0)return;mb=v;persist();cancelBE();renderBD();}
 function renderBD(){const big=document.getElementById('bbd');const brk=document.getElementById('bbrk');if(mb>=0){big.textContent='¥'+mb.toLocaleString();big.style.color=mb>0?'#1a7a36':mb===0?'#8e8e93':'#c0392b';brk.textContent='手動で入力した残高';}else{const t=hist.reduce((s,r)=>s+r.balance,0);big.textContent=(t>=0?'':'-')+'¥'+Math.abs(t).toLocaleString();big.style.color=t>0?'#1a7a36':t===0?'#8e8e93':'#c0392b';brk.textContent='履歴の累計から自動計算';}}
-function renderH(){renderBD();const ti=hist.reduce((s,r)=>s+r.income,0);const te=hist.reduce((s,r)=>s+r.expTotal,0);const tb=ti-te;document.getElementById('ss').textContent=hist.length+' 回';document.getElementById('si').textContent='¥'+ti.toLocaleString();document.getElementById('se').textContent='¥'+te.toLocaleString();const be=document.getElementById('sbl');be.textContent=(tb>=0?'+':'')+'¥'+tb.toLocaleString();be.style.color=tb>0?'#1a7a36':tb<0?'#c0392b':'#8e8e93';const l=document.getElementById('hl');if(hist.length===0){l.innerHTML='<div class="es">まだ記録がありません</div>';return;}l.innerHTML=hist.map(r=>{const d=new Date(r.date);const lb=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;const es=r.expItems&&r.expItems.length>0?r.expItems.map(e=>`${e.name}¥${e.amount.toLocaleString()}`).join('・'):'なし';const b=r.balance;const bc=b>0?'#1a7a36':b<0?'#c0392b':'#8e8e93';return`<div class="hi"><div class="hr2"><span style="font-size:15px;font-weight:600">${lb}</span><span class="bdg ${r.hasCoach?'c':'n'}">${r.hasCoach?'コーチあり':'自主練'}</span></div><div class="hd">${r.members.join('・')}（${r.members.length}人）</div><div class="hd">支出：${es}</div><div class="hr2" style="margin-top:5px"><span style="font-size:13px;color:#8e8e93">収入¥${r.income.toLocaleString()} ／ 支出¥${r.expTotal.toLocaleString()} ／ <span style="font-weight:600;color:${bc}">収支${b>=0?'+':''}¥${b.toLocaleString()}</span></span><button class="db" onclick="delR(${r.id})">削除</button></div></div>`;}).join('');}
+function renderH(){renderBD();const ti=hist.reduce((s,r)=>s+r.income,0);const te=hist.reduce((s,r)=>s+r.expTotal,0);const tb=ti-te;document.getElementById('ss').textContent=hist.length+' 回';document.getElementById('si').textContent='¥'+ti.toLocaleString();document.getElementById('se').textContent='¥'+te.toLocaleString();const be=document.getElementById('sbl');be.textContent=(tb>=0?'+':'')+'¥'+tb.toLocaleString();be.style.color=tb>0?'#1a7a36':tb<0?'#c0392b':'#8e8e93';const l=document.getElementById('hl');if(hist.length===0){l.innerHTML='<div class="es">まだ記録がありません</div>';return;}l.innerHTML=hist.map(r=>{const d=new Date(r.date);const lb=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;const es=r.expItems&&r.expItems.length>0?r.expItems.map(e=>`${e.name}¥${e.amount.toLocaleString()}`).join('・'):'なし';const b=r.balance;const bc=b>0?'#1a7a36':b<0?'#c0392b':'#8e8e93';const cc=r.coachCount||0;const hasC=cc>0||r.hasCoach;const bdgTxt=cc===2?'コーチ2人':hasC?'コーチ1人':'自主練';return`<div class="hi"><div class="hr2"><span style="font-size:15px;font-weight:600">${lb}</span><span class="bdg ${hasC?'c':'n'}">${bdgTxt}</span></div><div class="hd">${r.members.join('・')}（${r.members.length}人）</div><div class="hd">支出：${es}</div><div class="hr2" style="margin-top:5px"><span style="font-size:13px;color:#8e8e93">収入¥${r.income.toLocaleString()} ／ 支出¥${r.expTotal.toLocaleString()} ／ <span style="font-weight:600;color:${bc}">収支${b>=0?'+':''}¥${b.toLocaleString()}</span></span><button class="db" onclick="delR(${r.id})">削除</button></div></div>`;}).join('');}
 function delR(id){hist=hist.filter(r=>r.id!==id);persist();renderH();}
 function showTab(t){document.getElementById('vr').style.display=t==='r'?'block':'none';document.getElementById('vh').style.display=t==='h'?'block':'none';document.getElementById('tab-r').className='tab'+(t==='r'?' on':'');document.getElementById('tab-h').className='tab'+(t==='h'?' on':'');if(t==='h')renderH();}
 document.getElementById('pd').value=new Date().toISOString().split('T')[0];
