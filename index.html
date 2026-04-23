@@ -69,6 +69,10 @@ input:focus{border-color:#34c759;background:#fff}
 .cchip{padding:10px 6px;border:1.5px solid #d1d1d6;border-radius:10px;text-align:center;cursor:pointer;font-size:13px;color:#8e8e93;user-select:none;background:#f9f9f9;line-height:1.4}
 .cchip.on{background:#fff3e0;border-color:#ff9500;color:#8a5000;font-weight:600}
 .cchip small{font-size:11px;display:block;margin-top:2px}
+.bkrow{display:flex;gap:8px;margin-top:0}
+.bkbtn{flex:1;padding:12px 8px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid #d1d1d6;background:#f9f9f9;color:#1c1c1e;text-align:center;display:flex;align-items:center;justify-content:center;gap:5px}
+.bkbtn.ex{border-color:#34c759;color:#1a7a36;background:#e8f8ed}
+.bkbtn.im{border-color:#007aff;color:#007aff;background:#eaf2ff}
 </style>
 </head>
 <body>
@@ -125,6 +129,14 @@ input:focus{border-color:#34c759;background:#fff}
 <div class="m"><div class="ml">累計支出</div><div class="mv r" id="se">¥0</div></div>
 </div></div>
 <div class="card"><div class="st" style="margin-bottom:14px">練習の記録</div><div id="hl"></div></div>
+<div class="card">
+  <div class="st">バックアップ・復元</div>
+  <div style="font-size:13px;color:#8e8e93;margin-bottom:12px">Safariのデータ消去に備えて定期的にバックアップを保存してください</div>
+  <div class="bkrow">
+    <button class="bkbtn ex" onclick="exportData()">📤 エクスポート</button>
+    <label class="bkbtn im">📥 インポート<input type="file" accept=".json" onchange="importData(event)" style="display:none"/></label>
+  </div>
+</div>
 </div>
 </div>
 <script>
@@ -157,6 +169,8 @@ function saveMB(){const v=parseInt(document.getElementById('mbi').value);if(isNa
 function renderBD(){const big=document.getElementById('bbd');const brk=document.getElementById('bbrk');const cum=hist.reduce((s,r)=>s+r.balance,0);const cur=ib+cum;big.textContent=(cur>=0?'':'-')+'¥'+Math.abs(cur).toLocaleString();big.style.color=cur>0?'#1a7a36':cur===0?'#8e8e93':'#c0392b';brk.textContent='初期残高 ¥'+ib.toLocaleString()+'　＋　累計収支 '+(cum>=0?'+':'')+'¥'+cum.toLocaleString();}
 function renderH(){renderBD();const ti=hist.reduce((s,r)=>s+r.income,0);const te=hist.reduce((s,r)=>s+r.expTotal,0);const tb=ti-te;document.getElementById('ss').textContent=hist.length+' 回';document.getElementById('si').textContent='¥'+ti.toLocaleString();document.getElementById('se').textContent='¥'+te.toLocaleString();const be=document.getElementById('sbl');be.textContent=(tb>=0?'+':'')+'¥'+tb.toLocaleString();be.style.color=tb>0?'#1a7a36':tb<0?'#c0392b':'#8e8e93';const l=document.getElementById('hl');if(hist.length===0){l.innerHTML='<div class="es">まだ記録がありません</div>';return;}l.innerHTML=hist.map(r=>{const d=new Date(r.date);const lb=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;const es=r.expItems&&r.expItems.length>0?r.expItems.map(e=>`${e.name}¥${e.amount.toLocaleString()}`).join('・'):'なし';const b=r.balance;const bc=b>0?'#1a7a36':b<0?'#c0392b':'#8e8e93';const cc=r.coachCount||0;const hasC=cc>0||r.hasCoach;const bdgTxt=cc===2?'コーチ2人':hasC?'コーチ1人':'自主練';return`<div class="hi"><div class="hr2"><span style="font-size:15px;font-weight:600">${lb}</span><span class="bdg ${hasC?'c':'n'}">${bdgTxt}</span></div><div class="hd">${r.members.join('・')}（${r.members.length}人）</div><div class="hd">支出：${es}</div><div class="hr2" style="margin-top:5px"><span style="font-size:13px;color:#8e8e93">収入¥${r.income.toLocaleString()} ／ 支出¥${r.expTotal.toLocaleString()} ／ <span style="font-weight:600;color:${bc}">収支${b>=0?'+':''}¥${b.toLocaleString()}</span></span><button class="db" onclick="delR(${r.id})">削除</button></div></div>`;}).join('');}
 function delR(id){hist=hist.filter(r=>r.id!==id);persist();renderH();}
+function exportData(){const data={version:1,exportedAt:new Date().toISOString(),members:members,hist:hist,ib:ib};const json=JSON.stringify(data,null,2);const blob=new Blob([json],{type:'application/json'});const fname='badminton-kaikei-'+new Date().toISOString().split('T')[0]+'.json';const file=new File([blob],fname,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({title:'自主練会計バックアップ',files:[file]}).catch(()=>{});}else{const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);}}
+function importData(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(ev){try{const data=JSON.parse(ev.target.result);if(!Array.isArray(data.members)||!Array.isArray(data.hist))throw new Error();if(!confirm('現在のデータをバックアップから復元します。よろしいですか？\n（現在の記録は上書きされます）'))return;members=data.members;hist=data.hist;ib=typeof data.ib==='number'?data.ib:0;persist();renderM();renderH();calc();alert('✅ 復元完了（練習記録 '+hist.length+' 件）');}catch(err){alert('❌ ファイルの読み込みに失敗しました\n正しいバックアップファイルか確認してください');}};reader.readAsText(file);e.target.value='';}
 function showTab(t){document.getElementById('vr').style.display=t==='r'?'block':'none';document.getElementById('vh').style.display=t==='h'?'block':'none';document.getElementById('tab-r').className='tab'+(t==='r'?' on':'');document.getElementById('tab-h').className='tab'+(t==='h'?' on':'');if(t==='h')renderH();}
 document.getElementById('pd').value=new Date().toISOString().split('T')[0];
 renderM();renderE();calc();
