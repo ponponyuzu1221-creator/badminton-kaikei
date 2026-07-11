@@ -111,6 +111,14 @@ select{padding:8px 6px;border:1px solid #d1d1d6;border-radius:8px;font-size:13px
 </div>
 <div class="card"><div class="st">支出</div><div id="el"></div><button class="aeb" onclick="addE()">＋ 支出を追加</button></div>
 <div class="card">
+  <div class="st">一人から集める金額（基本）</div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <input type="number" id="fee" min="0" step="10" style="flex:1;font-size:20px;font-weight:600" oninput="uFee(this.value)"/>
+    <span style="font-size:16px;color:#8e8e93">円</span>
+  </div>
+  <div style="font-size:12px;color:#8e8e93;margin-top:8px">コーチが来た日は、この金額にコーチ代（÷人数）が上乗せされます</div>
+</div>
+<div class="card">
   <div class="st">コーチ来訪</div>
   <div class="cog">
     <div class="cchip on" onclick="setCoach(0)" id="co0">なし</div>
@@ -179,6 +187,8 @@ let exps=[{id:1,name:'コート代',amount:'',method:'c'},{id:2,name:'シャト�
 let eid=3;
 let delMode=false;
 let coachCount=0;
+let fee=parseInt(localStorage.getItem('bm_fee'));if(isNaN(fee)||fee<0)fee=500;
+function uFee(v){const n=parseInt(v);fee=(isNaN(n)||n<0)?0:n;localStorage.setItem('bm_fee',String(fee));calc();}
 function persist(){localStorage.setItem('bm_m',JSON.stringify(members));localStorage.setItem('bm_h',JSON.stringify(hist));localStorage.setItem('bm_ibs',JSON.stringify(ibs));}
 function toggleDelMode(){delMode=!delMode;document.getElementById('dmbtn').textContent=delMode?'完了':'名前を削除する';document.getElementById('dmbtn').style.color=delMode?'#ff3b30':'';renderM();}
 function delM(name){members=members.filter(m=>m!==name);sel.delete(name);delete payM[name];persist();renderM();renderPM();calc();}
@@ -193,10 +203,10 @@ function rmE(id){exps=exps.filter(e=>e.id!==id);renderE();calc();}
 function uEN(id,v){const e=exps.find(e=>e.id===id);if(e)e.name=v;}
 function uEA(id,v){const e=exps.find(e=>e.id===id);if(e){e.amount=v;calc();}}
 function uEM(id,v){const e=exps.find(e=>e.id===id);if(e)e.method=v;}
-function calc(){const c=sel.size;const ce=(coachCount>0&&c>0)?Math.floor(coachCount*1000/c):0;const pp=c>0?Math.floor((500+ce)/10)*10:0;const inc=pp*c;const et=exps.reduce((s,e)=>s+(parseInt(e.amount)||0),0);const bal=inc-et;document.getElementById('cd').textContent=c+' 人';document.getElementById('ed').textContent='¥'+et.toLocaleString();const canSave=c>0||et>0;if(c>0){document.getElementById('rb').style.display='block';document.getElementById('pp').textContent='¥'+pp.toLocaleString();const cn=document.getElementById('cn');if(coachCount>0){cn.style.display='block';cn.textContent='（¥500＋コーチ代¥'+ce+'）';}else cn.style.display='none';}else{document.getElementById('rb').style.display='none';}
+function calc(){const c=sel.size;const ce=(coachCount>0&&c>0)?Math.floor(coachCount*1000/c):0;const pp=c>0?Math.floor((fee+ce)/10)*10:0;const inc=pp*c;const et=exps.reduce((s,e)=>s+(parseInt(e.amount)||0),0);const bal=inc-et;document.getElementById('cd').textContent=c+' 人';document.getElementById('ed').textContent='¥'+et.toLocaleString();const canSave=c>0||et>0;if(c>0){document.getElementById('rb').style.display='block';document.getElementById('pp').textContent='¥'+pp.toLocaleString();const cn=document.getElementById('cn');if(coachCount>0){cn.style.display='block';cn.textContent='（¥'+fee.toLocaleString()+'＋コーチ代¥'+ce+'）';}else cn.style.display='none';}else{document.getElementById('rb').style.display='none';}
 if(canSave){const bx=document.getElementById('bcb');bx.style.display='block';bx.className='bb '+(bal>0?'s':bal<0?'d':'z');const be=document.getElementById('bd');be.style.color=bal>0?'#1a7a36':bal<0?'#c0392b':'#8e8e93';be.textContent=(bal>=0?'+':'')+'¥'+bal.toLocaleString();document.getElementById('bn').textContent=c===0?'練習なし（支出のみの記録）':bal>0?'収入が支出を上回っています':bal<0?'支出が収入を上回っています':'収支ぴったりです';}else{document.getElementById('bcb').style.display='none';}
 document.getElementById('sb').disabled=!canSave;}
-function save(){const dt=document.getElementById('pd').value||new Date().toISOString().split('T')[0];const c=sel.size;const ce=(coachCount>0&&c>0)?Math.floor(coachCount*1000/c):0;const pp=c>0?Math.floor((500+ce)/10)*10:0;const inc=pp*c;const ei=exps.filter(e=>e.name&&parseInt(e.amount)>0).map(e=>({name:e.name,amount:parseInt(e.amount),method:e.method||'c'}));const et=ei.reduce((s,e)=>s+e.amount,0);if(c===0&&et===0)return;const pays={};[...sel].forEach(m=>{pays[m]=payM[m]||'c';});const incBy={c:0,p:0,r:0};[...sel].forEach(m=>{incBy[pays[m]]+=pp;});const expBy={c:0,p:0,r:0};ei.forEach(e=>{expBy[e.method]+=e.amount;});hist.unshift({id:Date.now(),date:dt,members:[...sel],pays:pays,coachCount:c>0?coachCount:0,hasCoach:c>0&&coachCount>0,perPerson:pp,income:inc,incBy:incBy,expItems:ei,expBy:expBy,expTotal:et,balance:inc-et});persist();autoBackup();sel.clear();payM={};coachCount=0;setCoach(0);exps=[{id:1,name:'コート代',amount:'',method:'c'},{id:2,name:'シャトル代',amount:'',method:'c'}];eid=3;renderM();renderPM();renderE();calc();showTab('h');}
+function save(){const dt=document.getElementById('pd').value||new Date().toISOString().split('T')[0];const c=sel.size;const ce=(coachCount>0&&c>0)?Math.floor(coachCount*1000/c):0;const pp=c>0?Math.floor((fee+ce)/10)*10:0;const inc=pp*c;const ei=exps.filter(e=>e.name&&parseInt(e.amount)>0).map(e=>({name:e.name,amount:parseInt(e.amount),method:e.method||'c'}));const et=ei.reduce((s,e)=>s+e.amount,0);if(c===0&&et===0)return;const pays={};[...sel].forEach(m=>{pays[m]=payM[m]||'c';});const incBy={c:0,p:0,r:0};[...sel].forEach(m=>{incBy[pays[m]]+=pp;});const expBy={c:0,p:0,r:0};ei.forEach(e=>{expBy[e.method]+=e.amount;});hist.unshift({id:Date.now(),date:dt,members:[...sel],pays:pays,baseFee:fee,coachCount:c>0?coachCount:0,hasCoach:c>0&&coachCount>0,perPerson:pp,income:inc,incBy:incBy,expItems:ei,expBy:expBy,expTotal:et,balance:inc-et});persist();autoBackup();sel.clear();payM={};coachCount=0;setCoach(0);exps=[{id:1,name:'コート代',amount:'',method:'c'},{id:2,name:'シャトル代',amount:'',method:'c'}];eid=3;renderM();renderPM();renderE();calc();showTab('h');}
 function recBy(r){if(r.incBy&&r.expBy)return{c:r.incBy.c-r.expBy.c,p:r.incBy.p-r.expBy.p,r:r.incBy.r-r.expBy.r};return{c:r.balance,p:0,r:0};}
 function histSums(){const s={c:0,p:0,r:0};hist.forEach(rec=>{const b=recBy(rec);s.c+=b.c;s.p+=b.p;s.r+=b.r;});return s;}
 function curBal(){const h=histSums();return{c:(ibs.c||0)+h.c,p:(ibs.p||0)+h.p,r:(ibs.r||0)+h.r};}
@@ -213,6 +223,7 @@ function exportData(){const{blob,fname}=buildBackupBlob();const file=new File([b
 function importData(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=function(ev){try{const data=JSON.parse(ev.target.result);if(!Array.isArray(data.members)||!Array.isArray(data.hist))throw new Error();if(!confirm('現在のデータをバックアップから復元します。よろしいですか？\n（現在の記録は上書きされます）'))return;members=data.members;hist=data.hist;if(data.ibs&&typeof data.ibs==='object'){ibs={c:data.ibs.c||0,p:data.ibs.p||0,r:data.ibs.r||0};}else if(typeof data.ib==='number'){ibs={c:data.ib,p:0,r:0};}persist();renderM();renderPM();renderH();calc();alert('✅ 復元完了（記録 '+hist.length+' 件）');}catch(err){alert('❌ ファイルの読み込みに失敗しました\n正しいバックアップファイルか確認してください');}};reader.readAsText(file);e.target.value='';}
 function showTab(t){document.getElementById('vr').style.display=t==='r'?'block':'none';document.getElementById('vh').style.display=t==='h'?'block':'none';document.getElementById('tab-r').className='tab'+(t==='r'?' on':'');document.getElementById('tab-h').className='tab'+(t==='h'?' on':'');if(t==='h')renderH();}
 document.getElementById('pd').value=new Date().toISOString().split('T')[0];
+document.getElementById('fee').value=fee;
 renderM();renderPM();renderE();calc();
 </script>
 </body>
