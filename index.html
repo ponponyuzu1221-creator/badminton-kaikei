@@ -102,7 +102,12 @@ select{padding:8px 6px;border:1px solid #d1d1d6;border-radius:8px;font-size:13px
     <span>参加者</span>
     <button class="ebb" id="dmbtn" onclick="toggleDelMode()">名前を削除する</button>
   </div>
+  <div style="position:relative;margin-bottom:12px">
+    <input type="text" id="msrch" placeholder="🔍 名前で検索..." oninput="uSrch(this.value)" style="padding-right:40px"/>
+    <button id="msclr" onclick="clearSrch()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:none;background:#d1d1d6;color:#fff;font-size:14px;font-weight:700;cursor:pointer;line-height:1">×</button>
+  </div>
   <div class="mg" id="mg"></div>
+  <div id="mnores" class="es" style="display:none;padding:1rem 0">該当する名前がありません</div>
   <div class="ar"><input type="text" id="nmi" placeholder="名前を追加..." maxlength="8"/><button class="ab" onclick="addM()">追加</button></div>
 </div>
 <div class="card" id="pmcard" style="display:none">
@@ -189,10 +194,13 @@ let delMode=false;
 let coachCount=0;
 let fee=parseInt(localStorage.getItem('bm_fee'));if(isNaN(fee)||fee<0)fee=500;
 function uFee(v){const n=parseInt(v);fee=(isNaN(n)||n<0)?0:n;localStorage.setItem('bm_fee',String(fee));calc();}
+let srch='';
+function uSrch(v){srch=v.trim();document.getElementById('msclr').style.display=srch?'block':'none';renderM();}
+function clearSrch(){srch='';document.getElementById('msrch').value='';document.getElementById('msclr').style.display='none';renderM();}
 function persist(){localStorage.setItem('bm_m',JSON.stringify(members));localStorage.setItem('bm_h',JSON.stringify(hist));localStorage.setItem('bm_ibs',JSON.stringify(ibs));}
 function toggleDelMode(){delMode=!delMode;document.getElementById('dmbtn').textContent=delMode?'完了':'名前を削除する';document.getElementById('dmbtn').style.color=delMode?'#ff3b30':'';renderM();}
 function delM(name){members=members.filter(m=>m!==name);sel.delete(name);delete payM[name];persist();renderM();renderPM();calc();}
-function renderM(){const g=document.getElementById('mg');g.innerHTML='';members.forEach(m=>{const d=document.createElement('div');d.className='chip'+(sel.has(m)?' on':'');d.textContent=m;if(!delMode){d.onclick=()=>{if(sel.has(m)){sel.delete(m);delete payM[m];}else{sel.add(m);if(!payM[m])payM[m]='c';}renderM();renderPM();calc();};}if(delMode){const x=document.createElement('button');x.className='dxbtn';x.textContent='×';x.onclick=(e)=>{e.stopPropagation();delM(m);};d.appendChild(x);}g.appendChild(d);});}
+function renderM(){const g=document.getElementById('mg');g.innerHTML='';const shown=srch?members.filter(m=>m.includes(srch)||sel.has(m)):members;document.getElementById('mnores').style.display=shown.length===0?'block':'none';shown.forEach(m=>{const d=document.createElement('div');d.className='chip'+(sel.has(m)?' on':'');d.textContent=m;if(!delMode){d.onclick=()=>{if(sel.has(m)){sel.delete(m);delete payM[m];}else{sel.add(m);if(!payM[m])payM[m]='c';}renderM();renderPM();calc();};}if(delMode){const x=document.createElement('button');x.className='dxbtn';x.textContent='×';x.onclick=(e)=>{e.stopPropagation();delM(m);};d.appendChild(x);}g.appendChild(d);});}
 function addM(){const el=document.getElementById('nmi');const n=el.value.trim();if(!n||members.includes(n)){el.value='';return;}members.push(n);sel.add(n);payM[n]='c';persist();el.value='';renderM();renderPM();calc();}
 document.getElementById('nmi').addEventListener('keydown',e=>{if(e.key==='Enter')addM();});
 function renderPM(){const card=document.getElementById('pmcard');const l=document.getElementById('pml');if(sel.size===0){card.style.display='none';l.innerHTML='';return;}card.style.display='block';l.innerHTML='';[...sel].forEach(m=>{const row=document.createElement('div');row.className='pmr';const nm=document.createElement('div');nm.className='pmn';nm.textContent=m;row.appendChild(nm);const g=document.createElement('div');g.className='pmg';['c','p','r'].forEach(k=>{const ch=document.createElement('div');ch.className='pchip'+(payM[m]===k?' on '+k:'');ch.textContent=WN[k];ch.onclick=()=>{payM[m]=k;renderPM();};g.appendChild(ch);});row.appendChild(g);l.appendChild(row);});}
